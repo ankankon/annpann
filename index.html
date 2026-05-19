@@ -1,0 +1,690 @@
+//html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>DEATH MAZE</title>
+
+<style>
+
+body{
+  margin:0;
+  overflow:hidden;
+  background:black;
+  font-family:sans-serif;
+  cursor:none;
+}
+
+canvas{
+  display:block;
+}
+
+#menu{
+  position:fixed;
+  inset:0;
+
+  background:rgba(0,0,0,0.95);
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+
+  color:white;
+  text-align:center;
+
+  z-index:10;
+}
+
+#menu h1{
+  color:red;
+  font-size:75px;
+  letter-spacing:5px;
+  margin-bottom:20px;
+}
+
+#menu p{
+  font-size:22px;
+  line-height:1.8;
+}
+
+button{
+  margin-top:30px;
+  padding:15px 45px;
+
+  border:none;
+  border-radius:12px;
+
+  background:red;
+  color:white;
+
+  font-size:24px;
+  cursor:pointer;
+}
+
+#info{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+
+  background:rgba(0,0,0,0.6);
+
+  color:white;
+
+  padding:12px 22px;
+  border-radius:10px;
+
+  font-size:22px;
+
+  z-index:5;
+}
+
+</style>
+</head>
+<body>
+
+<div id="menu">
+
+  <h1>DEATH MAZE</h1>
+
+  <p>
+    マウス：視点操作<br>
+    WASD：移動<br><br>
+
+    奴は迷路を徘徊している。<br>
+    見つかれば追われる。
+  </p>
+
+  <button onclick="startGame()">
+    START
+  </button>
+
+</div>
+
+<div id="info"></div>
+
+<canvas id="game"></canvas>
+
+<script>
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+const TILE = 100;
+
+const map = [
+
+"################",
+"#S       #    E#",
+"# ###### # #####",
+"#      # #     #",
+"###### # ##### #",
+"#      #       #",
+"# #### #########",
+"#              #",
+"################"
+
+];
+
+const startPlayer = {
+
+  x:TILE * 1.5,
+  y:TILE * 1.5,
+  angle:0
+};
+
+const startEnemy = {
+
+  x:TILE * 13.5,
+  y:TILE * 7.5
+};
+
+let player;
+let enemy;
+
+let keys = {};
+let playing = false;
+
+const menu = document.getElementById("menu");
+const info = document.getElementById("info");
+
+resetGame();
+
+function resetGame(){
+
+  player = {
+
+    x:startPlayer.x,
+    y:startPlayer.y,
+    angle:startPlayer.angle
+  };
+
+  enemy = {
+
+    x:startEnemy.x,
+    y:startEnemy.y,
+
+    speed:1.2,
+
+    chasing:false,
+
+    moveAngle:Math.random() * Math.PI * 2,
+
+    changeTimer:0
+  };
+}
+
+function startGame(){
+
+  resetGame();
+
+  playing = true;
+
+  menu.style.display = "none";
+
+  canvas.requestPointerLock();
+
+  message("逃げろ...");
+}
+
+function message(text){
+
+  info.textContent = text;
+
+  clearTimeout(info.timer);
+
+  info.timer = setTimeout(()=>{
+
+    info.textContent = "";
+
+  },2000);
+}
+
+document.addEventListener("mousemove", e=>{
+
+  if(document.pointerLockElement === canvas){
+
+    player.angle += e.movementX * 0.0025;
+  }
+});
+
+addEventListener("keydown", e=>{
+
+  keys[e.key.toLowerCase()] = true;
+});
+
+addEventListener("keyup", e=>{
+
+  keys[e.key.toLowerCase()] = false;
+});
+
+function isWall(x,y){
+
+  const gx = Math.floor(x / TILE);
+  const gy = Math.floor(y / TILE);
+
+  if(!map[gy]) return true;
+
+  return map[gy][gx] === "#";
+}
+
+function canSeePlayer(){
+
+  let dx = player.x - enemy.x;
+  let dy = player.y - enemy.y;
+
+  let dist = Math.hypot(dx,dy);
+
+  let steps = dist / 5;
+
+  for(let i=0;i<steps;i++){
+
+    let t = i / steps;
+
+    let rx = enemy.x + dx * t;
+    let ry = enemy.y + dy * t;
+
+    if(isWall(rx,ry)){
+
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function movePlayer(){
+
+  let speed = 3;
+
+  let nx = player.x;
+  let ny = player.y;
+
+  if(keys["w"]){
+
+    nx += Math.cos(player.angle) * speed;
+    ny += Math.sin(player.angle) * speed;
+  }
+
+  if(keys["s"]){
+
+    nx -= Math.cos(player.angle) * speed;
+    ny -= Math.sin(player.angle) * speed;
+  }
+
+  if(keys["a"]){
+
+    nx += Math.cos(player.angle - Math.PI/2) * speed;
+    ny += Math.sin(player.angle - Math.PI/2) * speed;
+  }
+
+  if(keys["d"]){
+
+    nx += Math.cos(player.angle + Math.PI/2) * speed;
+    ny += Math.sin(player.angle + Math.PI/2) * speed;
+  }
+
+  if(!isWall(nx, player.y)){
+
+    player.x = nx;
+  }
+
+  if(!isWall(player.x, ny)){
+
+    player.y = ny;
+  }
+
+  checkGoal();
+}
+
+function moveEnemy(){
+
+  // プレイヤー発見
+  if(canSeePlayer()){
+
+    if(!enemy.chasing){
+
+      message("見つかった...");
+    }
+
+    enemy.chasing = true;
+  }
+
+  // 追跡モード
+  if(enemy.chasing){
+
+    let dx = player.x - enemy.x;
+    let dy = player.y - enemy.y;
+
+    let dist = Math.hypot(dx,dy);
+
+    dx /= dist;
+    dy /= dist;
+
+    let nx =
+      enemy.x + dx * enemy.speed;
+
+    let ny =
+      enemy.y + dy * enemy.speed;
+
+    if(!isWall(nx, enemy.y)){
+
+      enemy.x = nx;
+    }
+
+    if(!isWall(enemy.x, ny)){
+
+      enemy.y = ny;
+    }
+
+    if(dist < 22){
+
+      gameOver();
+    }
+
+  }else{
+
+    // 徘徊モード
+    enemy.changeTimer--;
+
+    if(enemy.changeTimer <= 0){
+
+      enemy.moveAngle =
+        Math.random() * Math.PI * 2;
+
+      enemy.changeTimer =
+        60 + Math.random() * 120;
+    }
+
+    let nx =
+      enemy.x +
+      Math.cos(enemy.moveAngle) *
+      enemy.speed * 0.7;
+
+    let ny =
+      enemy.y +
+      Math.sin(enemy.moveAngle) *
+      enemy.speed * 0.7;
+
+    if(isWall(nx,ny)){
+
+      enemy.moveAngle =
+        Math.random() * Math.PI * 2;
+
+    }else{
+
+      enemy.x = nx;
+      enemy.y = ny;
+    }
+  }
+}
+
+function checkGoal(){
+
+  const gx = Math.floor(player.x / TILE);
+  const gy = Math.floor(player.y / TILE);
+
+  if(map[gy][gx] === "E"){
+
+    finishGame();
+  }
+}
+
+function finishGame(){
+
+  playing = false;
+
+  document.exitPointerLock();
+
+  menu.style.display = "flex";
+
+  menu.innerHTML = `
+
+    <h1>ESCAPE</h1>
+
+    <p>
+      脱出成功
+    </p>
+
+    <button onclick="startGame()">
+      RETRY
+    </button>
+  `;
+}
+
+function gameOver(){
+
+  playing = false;
+
+  document.exitPointerLock();
+
+  menu.style.display = "flex";
+
+  menu.innerHTML = `
+
+    <h1>GAME OVER</h1>
+
+    <p>
+      捕まった...
+    </p>
+
+    <button onclick="startGame()">
+      RETRY
+    </button>
+  `;
+}
+
+function drawWorld(){
+
+  // 空
+  ctx.fillStyle = "#87ceeb";
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height/2
+  );
+
+  // 地面
+  ctx.fillStyle = "#444";
+
+  ctx.fillRect(
+    0,
+    canvas.height/2,
+    canvas.width,
+    canvas.height/2
+  );
+
+  for(let i=0;i<canvas.width;i++){
+
+    let rayAngle =
+      player.angle - 0.55 +
+      (i / canvas.width) * 1.1;
+
+    let dist = 0;
+    let hit = false;
+
+    while(!hit && dist < 2000){
+
+      dist += 2;
+
+      let rx =
+        player.x +
+        Math.cos(rayAngle) * dist;
+
+      let ry =
+        player.y +
+        Math.sin(rayAngle) * dist;
+
+      if(isWall(rx,ry)){
+
+        hit = true;
+      }
+    }
+
+    let corrected =
+      dist *
+      Math.cos(rayAngle - player.angle);
+
+    let wallHeight =
+      24000 / corrected;
+
+    let shade =
+      Math.max(
+        40,
+        255 - corrected / 4
+      );
+
+    ctx.fillStyle =
+      `rgb(${shade},${shade},${shade})`;
+
+    ctx.fillRect(
+
+      i,
+
+      canvas.height/2 -
+      wallHeight/2,
+
+      1,
+
+      wallHeight
+    );
+  }
+}
+
+function drawEnemy(){
+
+  let dx = enemy.x - player.x;
+  let dy = enemy.y - player.y;
+
+  let dist = Math.hypot(dx,dy);
+
+  let angle =
+    Math.atan2(dy,dx);
+
+  let relative =
+    angle - player.angle;
+
+  while(relative < -Math.PI){
+
+    relative += Math.PI * 2;
+  }
+
+  while(relative > Math.PI){
+
+    relative -= Math.PI * 2;
+  }
+
+  if(Math.abs(relative) > 0.6){
+
+    return;
+  }
+
+  let screenX =
+    (relative + 0.6) / 1.2 *
+    canvas.width;
+
+  let size =
+    9000 / dist;
+
+  let y =
+    canvas.height/2 - size/2;
+
+  // 影
+  ctx.fillStyle =
+    "rgba(0,0,0,0.35)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    screenX,
+    y + size*0.95,
+    size*0.28,
+    size*0.10,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+  // 足
+  ctx.fillStyle = "#111";
+
+  ctx.fillRect(
+    screenX - size*0.15,
+    y + size*0.55,
+    size*0.10,
+    size*0.35
+  );
+
+  ctx.fillRect(
+    screenX + size*0.05,
+    y + size*0.55,
+    size*0.10,
+    size*0.35
+  );
+
+  // 胴体
+  ctx.fillStyle =
+    enemy.chasing ? "#550000" : "#1a1a1a";
+
+  ctx.fillRect(
+    screenX - size*0.22,
+    y + size*0.20,
+    size*0.44,
+    size*0.45
+  );
+
+  // 腕
+  ctx.fillRect(
+    screenX - size*0.33,
+    y + size*0.23,
+    size*0.10,
+    size*0.32
+  );
+
+  ctx.fillRect(
+    screenX + size*0.23,
+    y + size*0.23,
+    size*0.10,
+    size*0.32
+  );
+
+  // 頭
+  ctx.fillStyle = "#ddd";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    screenX,
+    y + size*0.08,
+    size*0.16,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+  // 目
+  ctx.fillStyle =
+    enemy.chasing ? "red" : "black";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    screenX - size*0.05,
+    y + size*0.06,
+    size*0.02,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    screenX + size*0.05,
+    y + size*0.06,
+    size*0.02,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+}
+
+function loop(){
+
+  if(playing){
+
+    movePlayer();
+
+    moveEnemy();
+
+    drawWorld();
+
+    drawEnemy();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+onresize = ()=>{
+
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+};
+
+</script>
+</body>
+</html>
+```

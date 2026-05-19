@@ -1,9 +1,8 @@
-//html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>DEATH MAZE</title>
+<title>DEATH MAZE AI</title>
 
 <style>
 
@@ -130,6 +129,15 @@ const map = [
 
 ];
 
+const DIRECTIONS = [
+
+  {x:1,y:0},
+  {x:-1,y:0},
+  {x:0,y:1},
+  {x:0,y:-1}
+
+];
+
 const startPlayer = {
 
   x:TILE * 1.5,
@@ -168,13 +176,13 @@ function resetGame(){
     x:startEnemy.x,
     y:startEnemy.y,
 
-    speed:1.2,
+    speed:1.4,
 
     chasing:false,
 
-    moveAngle:Math.random() * Math.PI * 2,
+    loseTimer:0,
 
-    changeTimer:0
+    dir:{x:-1,y:0}
   };
 }
 
@@ -301,6 +309,35 @@ function movePlayer(){
   checkGoal();
 }
 
+function enemyAtCenter(){
+
+  return (
+    Math.abs((enemy.x % TILE) - TILE/2) < 4 &&
+    Math.abs((enemy.y % TILE) - TILE/2) < 4
+  );
+}
+
+function getAvailableDirections(){
+
+  const dirs = [];
+
+  const gx = Math.floor(enemy.x / TILE);
+  const gy = Math.floor(enemy.y / TILE);
+
+  for(let dir of DIRECTIONS){
+
+    const nx = gx + dir.x;
+    const ny = gy + dir.y;
+
+    if(map[ny][nx] !== "#"){
+
+      dirs.push(dir);
+    }
+  }
+
+  return dirs;
+}
+
 function moveEnemy(){
 
   // プレイヤー発見
@@ -312,9 +349,26 @@ function moveEnemy(){
     }
 
     enemy.chasing = true;
+
+    enemy.loseTimer = 0;
+
+  }else{
+
+    if(enemy.chasing){
+
+      enemy.loseTimer++;
+
+      // 5秒見失う
+      if(enemy.loseTimer > 300){
+
+        enemy.chasing = false;
+
+        message("撒いた...");
+      }
+    }
   }
 
-  // 追跡モード
+  // 追跡
   if(enemy.chasing){
 
     let dx = player.x - enemy.x;
@@ -348,34 +402,43 @@ function moveEnemy(){
 
   }else{
 
-    // 徘徊モード
-    enemy.changeTimer--;
+    // 曲がり角で方向変更
+    if(enemyAtCenter()){
 
-    if(enemy.changeTimer <= 0){
+      let dirs =
+        getAvailableDirections();
 
-      enemy.moveAngle =
-        Math.random() * Math.PI * 2;
+      // 戻る方向を除外
+      dirs = dirs.filter(dir => {
 
-      enemy.changeTimer =
-        60 + Math.random() * 120;
+        return !(
+          dir.x === -enemy.dir.x &&
+          dir.y === -enemy.dir.y
+        );
+      });
+
+      if(dirs.length > 0){
+
+        enemy.dir =
+          dirs[
+            Math.floor(
+              Math.random() * dirs.length
+            )
+          ];
+      }
     }
 
     let nx =
       enemy.x +
-      Math.cos(enemy.moveAngle) *
-      enemy.speed * 0.7;
+      enemy.dir.x *
+      enemy.speed;
 
     let ny =
       enemy.y +
-      Math.sin(enemy.moveAngle) *
-      enemy.speed * 0.7;
+      enemy.dir.y *
+      enemy.speed;
 
-    if(isWall(nx,ny)){
-
-      enemy.moveAngle =
-        Math.random() * Math.PI * 2;
-
-    }else{
+    if(!isWall(nx,ny)){
 
       enemy.x = nx;
       enemy.y = ny;
@@ -687,4 +750,3 @@ onresize = ()=>{
 </script>
 </body>
 </html>
-```

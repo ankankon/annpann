@@ -1,0 +1,66 @@
+body{
+  margin:0;
+  overflow:hidden;
+  background:black;
+  font-family:sans-serif;
+}
+
+canvas{
+  display:block;
+}
+
+#startScreen{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.92);
+  color:white;
+  z-index:10;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+}
+
+#startScreen h1{
+  color:#ff4444;
+  font-size:70px;
+  margin-bottom:20px;
+  letter-spacing:5px;
+}
+
+#startScreen p{
+  font-size:22px;
+  line-height:1.8;
+}
+
+.controls{
+  margin-top:20px;
+  color:#ccc;
+  font-size:18px;
+}
+
+#startBtn{
+  margin-top:40px;
+  padding:15px 45px;
+  border:none;
+  border-radius:12px;
+  background:#ff4444;
+  color:white;
+  font-size:25px;
+  cursor:pointer;
+}
+
+#message{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  color:white;
+  background:rgba(0,0,0,0.6);
+  padding:12px 20px;
+  border-radius:10px;
+  font-size:22px;
+  z-index:5;
+}

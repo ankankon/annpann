@@ -1,0 +1,45 @@
+/* home.css */
+body {
+  background-color: #050505; /* 真っ黒より少しグレー */
+  color: #eeeeee;
+  font-family: 'serif';
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 50px 20px;
+}
+
+h1 {
+  color: red;
+  font-size: 3rem;
+  letter-spacing: 10px;
+  text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+  border-bottom: 2px solid red;
+  padding-bottom: 10px;
+}
+
+.container {
+  max-width: 800px;
+  line-height: 1.8;
+  background: rgba(20, 20, 20, 0.8);
+  padding: 30px;
+  border-radius: 5px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 1);
+}
+
+a.back-button {
+  display: inline-block;
+  margin-top: 30px;
+  color: #888;
+  text-decoration: none;
+  border: 1px solid #444;
+  padding: 10px 20px;
+  transition: 0.3s;
+}
+
+a.back-button:hover {
+  background: red;
+  color: white;
+  border-color: red;
+}

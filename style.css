@@ -12,7 +12,6 @@ canvas {
   display: block;
 }
 
-/* メインメニュー & ポーズメニューの共通基盤 */
 #menu, #pause-menu {
   position: fixed;
   inset: 0;
@@ -46,7 +45,6 @@ canvas {
   margin-bottom: 10px;
 }
 
-/* ポーズ画面下のヘルプ文字 */
 .help-text {
   font-size: 14px;
   color: #888;
@@ -65,7 +63,6 @@ canvas {
   min-width: 250px;
 }
 
-/* ボタンのスタイル */
 button.start-btn, button.menu-btn {
   padding: 15px 30px;
   border: none;
@@ -85,7 +82,6 @@ button.start-btn:hover, button.menu-btn:hover {
   background: #cc0000;
 }
 
-/* 🔴 キーボードで選択されているボタンのスタイル */
 button.menu-btn.selected {
   background: #ff0000;
   border-color: white;
@@ -100,7 +96,6 @@ button.start-btn span {
   margin-top: 5px;
 }
 
-/* ゲーム中のMENUボタン（左上） */
 #ingame-menu-btn {
   position: fixed;
   top: 15px;
@@ -117,7 +112,21 @@ button.start-btn span {
   display: none;
 }
 
-/* ゲーム中の通知メッセージ */
+/* タイムアタック用タイマー表示 */
+#timer-display {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  color: #00ff00;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px black;
+  z-index: 5;
+  display: none;
+  pointer-events: none;
+}
+
 #info {
   position: fixed;
   top: 20px;
@@ -134,7 +143,6 @@ button.start-btn span {
   white-space: nowrap;
 }
 
-/* スマホ用タッチエリア */
 #touch-container {
   display: none;
   position: fixed;
@@ -154,7 +162,6 @@ button.start-btn span {
 #left-zone { left: 0; }
 #right-zone { right: 0; }
 
-/* バーチャルジョイスティック */
 #joystick-base {
   position: absolute;
   width: 100px;
